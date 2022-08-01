@@ -16,5 +16,46 @@
             <a class="btn btn-ghost normal-case text-xl">Laser Eyes</a>
         </div>
     </header>
+    <form id="image-upload-form" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input id="fileInput" type="file" style="display:none;" />
+        <input class="btn" type="button" value="Upload" onclick="openFileExplorer()" />
+    </form>
+    <script>
+        function openFileExplorer() {
+            const input = document.getElementById('fileInput');
+            input.click();
+            input.onchange = onFileSelect;
+        }
+
+        function onFileSelect(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = function(f) {
+                uploadImage(f.target.result);
+            };
+
+            reader.readAsBinaryString(file);
+        }
+
+        function uploadImage(data) {
+            const http = new XMLHttpRequest();
+            http.onreadystatechange = function() {
+                if (http.readyState == XMLHttpRequest.DONE) {
+                    console.log(http.responseText);
+                }
+            }
+
+            const url = '/process';
+            const jsonData = {
+                image: data
+            };
+
+            http.open('POST', url);
+            http.send(JSON.stringify(jsonData));
+
+        }
+    </script>
 </body>
 </html>
