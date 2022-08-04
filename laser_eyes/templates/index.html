@@ -30,31 +30,25 @@
 
         function onFileSelect(e) {
             const file = e.target.files[0];
-            const reader = new FileReader();
-
-            reader.onload = function(f) {
-                uploadImage(f.target.result);
-            };
-
-            reader.readAsBinaryString(file);
+            const formData = new FormData();
+            formData.append('image', file);
+            uploadImage(formData);
         }
 
-        function uploadImage(data) {
+        function uploadImage(formData) {
             const http = new XMLHttpRequest();
             http.onreadystatechange = function() {
                 if (http.readyState == XMLHttpRequest.DONE) {
-                    console.log(http.responseText);
+                    const img = document.createElement('img');
+                    img.src = 'data:image/jpeg;base64,' + http.responseText;
+                    document.body.appendChild(img);
                 }
             }
 
             const url = '/process';
-            const jsonData = {
-                image: data
-            };
 
             http.open('POST', url);
-            http.send(JSON.stringify(jsonData));
-
+            http.send(formData);
         }
     </script>
 </body>

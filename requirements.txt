@@ -1,1 +1,2 @@
 Django==3.2.13
+opencv_contrib_python==4.6.0.66
