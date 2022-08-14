@@ -5,22 +5,49 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="{% static 'css/style.css' %}" type="text/css" rel="stylesheet">
+  <!-- <link href="{% static 'css/style.css' %}" type="text/css" rel="stylesheet"> -->
 
   <!-- CDN -->
-  <link href="https://cdn.jsdelivr.net/npm/daisyui@2.20.0/dist/full.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@2.24.0/dist/full.css" rel="stylesheet" type="text/css" />
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2/dist/tailwind.min.css" rel="stylesheet" type="text/css" />
 </head>
 <body>
     <header>
-        <div class="navbar bg-base-100">
+        <div class="navbar bg-primary text-primary-content">
             <a class="btn btn-ghost normal-case text-xl">Laser Eyes</a>
         </div>
     </header>
-    <form id="image-upload-form" method="post" enctype="multipart/form-data">
-        {% csrf_token %}
-        <input id="fileInput" type="file" style="display:none;" />
-        <input class="btn" type="button" value="Upload" onclick="openFileExplorer()" />
-    </form>
+
+    <div class="container py-10 mx-auto">
+        <div class="flex flex-wrap space-x-10">
+            <div class="flex-auto w-32">
+                <div class="card card-bordered border-gray-600 border-2">
+                    <div class="card-body">
+                        <h2 class="card-title">Upload an Image</h2>
+                        <p>Insert an image containing human eyes and turn them into laser eyes.</p>
+                        <div class="card-actions justify-center pt-4">
+                            <input id="fileInput" type="file" style="display:none;" />
+                            <button id="upload-btn" class="btn gap-2" type="input" onclick="openFileExplorer()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 4.2v10.3"/></svg>
+                                Upload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex-auto w-64">
+                <div class="card card-bordered border-gray-600 border-2">
+                    <div class="card-body">
+                        <h2 class="card-title">Output</h2>
+                    </div>
+                    <figure>
+                        <img id="output-canvas" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/>
+                    </figure>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         function openFileExplorer() {
             const input = document.getElementById('fileInput');
@@ -36,12 +63,13 @@
         }
 
         function uploadImage(formData) {
+            setLoadingBtn();
             const http = new XMLHttpRequest();
             http.onreadystatechange = function() {
                 if (http.readyState == XMLHttpRequest.DONE) {
-                    const img = document.createElement('img');
+                    const img = document.getElementById('output-canvas');
                     img.src = 'data:image/jpeg;base64,' + http.responseText;
-                    document.body.appendChild(img);
+                    resetLoadingBtn();
                 }
             }
 
@@ -49,6 +77,28 @@
 
             http.open('POST', url);
             http.send(formData);
+        }
+
+        function setLoadingBtn() {
+            const button = document.getElementById('upload-btn');
+            if (!button.classList.contains('loading')) {
+                button.classList.add('loading');
+                const svg = button.querySelector('svg');
+                if (svg) {
+                    svg.style.display = 'none';
+                }
+            }
+        }
+
+        function resetLoadingBtn() {
+            const button = document.getElementById('upload-btn');
+            if (button.classList.contains('loading')) {
+                button.classList.remove('loading');
+                const svg = button.querySelector('svg');
+                if (svg) {
+                    svg.style.display = '';
+                }
+            }
         }
     </script>
 </body>
