@@ -25,9 +25,12 @@
                     <div class="card-body">
                         <h2 class="card-title">Upload an Image</h2>
                         <p>Insert an image containing human eyes and turn them into laser eyes.</p>
+                        <i class="text-gray-500">
+                            <p id="selected-file-text"></p>
+                        </i>
                         <div class="card-actions justify-center pt-4">
                             <input id="fileInput" type="file" style="display:none;" />
-                            <button id="upload-btn" class="btn gap-2" type="input" onclick="openFileExplorer()">
+                            <button id="upload-btn" class="btn btn-primary gap-2" type="input" onclick="openFileExplorer()">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 4.2v10.3"/></svg>
                                 Upload
                             </button>
@@ -38,7 +41,13 @@
             <div class="flex-auto w-64">
                 <div class="card card-bordered border-gray-600 border-2">
                     <div class="card-body">
-                        <h2 class="card-title">Output</h2>
+                        <div class="card-actions items-center justify-between">
+                            <h2 class="card-title">Output</h2>
+                            <button id="download-btn" class="btn btn-secondary gap-2 btn-disabled" onclick="downloadImage()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 9l-5 5-5-5M12 12.8V2.5"/></svg>
+                                Download
+                            </button>
+                        </div>
                     </div>
                     <figure>
                         <img id="output-canvas" src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs="/>
@@ -49,6 +58,8 @@
     </div>
 
     <script>
+        let currInputFile;
+
         function openFileExplorer() {
             const input = document.getElementById('fileInput');
             input.click();
@@ -56,10 +67,16 @@
         }
 
         function onFileSelect(e) {
-            const file = e.target.files[0];
-            const formData = new FormData();
-            formData.append('image', file);
-            uploadImage(formData);
+            if (e.target.files.length > 0) {
+                const file = e.target.files[0];
+                currInputFile = file;
+                const formData = new FormData();
+                formData.append('image', file);
+                uploadImage(formData);
+                
+                const fileText = document.getElementById('selected-file-text');
+                fileText.textContent = `Selected File: ${file.name}`;
+            }
         }
 
         function uploadImage(formData) {
@@ -70,6 +87,11 @@
                     const img = document.getElementById('output-canvas');
                     img.src = 'data:image/jpeg;base64,' + http.responseText;
                     resetLoadingBtn();
+                    
+                    const downloadBtn = document.getElementById('download-btn');
+                    if (downloadBtn.classList.contains('btn-disabled')) {
+                        downloadBtn.classList.remove('btn-disabled');
+                    }
                 }
             }
 
@@ -100,6 +122,27 @@
                 }
             }
         }
+
+        function downloadImage() {
+            // Ref: https://ourcodeworld.com/articles/read/189/how-to-create-a-file-and-generate-a-download-with-javascript-in-the-browser-without-a-server
+            const img = document.getElementById('output-canvas');
+            const filename = `laser_${currInputFile.name}`;
+
+            const element = document.createElement('a');
+            element.setAttribute('href', img.src);
+            element.setAttribute('download', filename);
+
+            element.style.display = 'none';
+            document.body.appendChild(element);
+
+            element.click();
+
+            document.body.removeChild(element);
+        }
+
+        // Start file download.
+        download("hello.txt","This is the content of my file :)");
+
     </script>
 </body>
 </html>
