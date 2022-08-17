@@ -10,7 +10,6 @@ import numpy
 def detect_eyes(image):
     eye_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_righteye.xml'))
     frontal_face_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_frontalface_default.xml'))
-    mouth_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_mouth.xml'))
     nose_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_nose.xml'))
     
     faces = frontal_face_cascade.detectMultiScale(image, scaleFactor = 1.1, minNeighbors = 3)
@@ -22,19 +21,13 @@ def detect_eyes(image):
     for (x,y,w,h) in faces:
         # cv2.rectangle(image,(x,y),(x+w,y+h),(102, 0, 255),5)
 
-        cand_eyes = eye_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.2, minNeighbors = 4)
-        cand_mouths = mouth_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.4, minNeighbors = 8)
+        cand_eyes = eye_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.25, minNeighbors = 5)
         cand_noses = nose_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.2, minNeighbors = 3)
 
         nose = find_nose(cand_noses, (w,h))
 
         face_x = x
         face_y = y
-
-        for (x,y,w,h) in cand_mouths:
-            x = x + face_x  # offset within face area
-            y = y + face_y  # offset within face area
-            # cv2.rectangle(image,(x,y),(x+w,y+h),(20, 167, 240),5)
         
         for (x,y,w,h) in cand_noses:
             x = x + face_x  # offset within face area
@@ -94,9 +87,6 @@ def find_nose(candidates: numpy.ndarray, face_size: tuple) -> numpy.ndarray:
     best_cand = min(candidates, key=distance_from_center)
 
     return best_cand
-    
-def find_eye_pairs(eyes):
-    print(eyes)
 
 def classifier_file(filename: str) -> str:
     classifier_dir = 'laser_eyes/assets/classifiers'
