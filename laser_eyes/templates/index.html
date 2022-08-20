@@ -21,7 +21,8 @@
 
     <div class="container py-10 mx-auto">
         <div class="flex flex-wrap space-x-10">
-            <div class="flex-auto w-32">
+            <div class="flex-auto w-32 space-y-10">
+                <!-- Image Upload Card -->
                 <div class="card card-bordered border-gray-600 border-2">
                     <div class="card-body">
                         <h2 class="card-title">Upload an Image</h2>
@@ -34,6 +35,25 @@
                             <button id="upload-btn" class="btn btn-primary gap-2" type="input" onclick="openFileExplorer()">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 15v4c0 1.1.9 2 2 2h14a2 2 0 0 0 2-2v-4M17 8l-5-5-5 5M12 4.2v10.3"/></svg>
                                 Upload
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Card -->
+                <div class="card card-bordered border-gray-600 border-2">
+                    <div class="card-body ">
+                        <h2 class="card-title">Settings</h2>
+    
+                        <div class="mt-2">
+                            <h3 class="pb-4">Laser Scale</h3>
+                            <input id="laserScaleInput" type="range" min="1.0" max="4.0" value="1.0" class="range range-accent" />
+                        </div>
+    
+                        <div class="card-actions justify-center pt-4">
+                            <button id="update-btn" class="btn btn-secondary gap-2 btn-disabled" type="input" onclick="updateImage()">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"> <path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg>
+                                Update
                             </button>
                         </div>
                     </div>
@@ -58,92 +78,6 @@
         </div>
     </div>
 
-    <script>
-        let currInputFile;
-
-        function openFileExplorer() {
-            const input = document.getElementById('fileInput');
-            input.click();
-            input.onchange = onFileSelect;
-        }
-
-        function onFileSelect(e) {
-            if (e.target.files.length > 0) {
-                const file = e.target.files[0];
-                currInputFile = file;
-                const formData = new FormData();
-                formData.append('image', file);
-                uploadImage(formData);
-                
-                const fileText = document.getElementById('selected-file-text');
-                fileText.textContent = `Selected File: ${file.name}`;
-            }
-        }
-
-        function uploadImage(formData) {
-            setLoadingBtn();
-            const http = new XMLHttpRequest();
-            http.onreadystatechange = function() {
-                if (http.readyState == XMLHttpRequest.DONE) {
-                    const img = document.getElementById('output-canvas');
-                    img.src = 'data:image/jpeg;base64,' + http.responseText;
-                    resetLoadingBtn();
-                    
-                    const downloadBtn = document.getElementById('download-btn');
-                    if (downloadBtn.classList.contains('btn-disabled')) {
-                        downloadBtn.classList.remove('btn-disabled');
-                    }
-                }
-            }
-
-            const url = '/process';
-
-            http.open('POST', url);
-            http.send(formData);
-        }
-
-        function setLoadingBtn() {
-            const button = document.getElementById('upload-btn');
-            if (!button.classList.contains('loading')) {
-                button.classList.add('loading');
-                const svg = button.querySelector('svg');
-                if (svg) {
-                    svg.style.display = 'none';
-                }
-            }
-        }
-
-        function resetLoadingBtn() {
-            const button = document.getElementById('upload-btn');
-            if (button.classList.contains('loading')) {
-                button.classList.remove('loading');
-                const svg = button.querySelector('svg');
-                if (svg) {
-                    svg.style.display = '';
-                }
-            }
-        }
-
-        function downloadImage() {
-            // Ref: https://ourcodeworld.com/articles/read/189/how-to-create-a-file-and-generate-a-download-with-javascript-in-the-browser-without-a-server
-            const img = document.getElementById('output-canvas');
-            const filename = `laser_${currInputFile.name}`;
-
-            const element = document.createElement('a');
-            element.setAttribute('href', img.src);
-            element.setAttribute('download', filename);
-
-            element.style.display = 'none';
-            document.body.appendChild(element);
-
-            element.click();
-
-            document.body.removeChild(element);
-        }
-
-        // Start file download.
-        download("hello.txt","This is the content of my file :)");
-
-    </script>
+    <script src="{% static 'js/index.js' %}"></script>
 </body>
 </html>

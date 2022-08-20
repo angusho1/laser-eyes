@@ -7,7 +7,8 @@
 import cv2
 import numpy
 
-def detect_eyes(image):
+def detect_eyes(image, laser_scale):
+    print(f'laser scale: {laser_scale}')
     eye_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_righteye.xml'))
     frontal_face_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_frontalface_default.xml'))
     nose_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_nose.xml'))
@@ -41,14 +42,16 @@ def detect_eyes(image):
             x = x + face_x  # offset within face area
             y = y + face_y  # offset within face area
 
-            width = w   # desired width of laser image
+            width = w * int(laser_scale)   # desired width of laser image
             height = int(width * (laser_img_h / laser_img_w))
             scaled_laser_img = cv2.resize(laser_img, (width, height))
+            scaled_laser_width = scaled_laser_img.shape[1]
             scaled_laser_height = scaled_laser_img.shape[0]
+            x_start = int(x + (w/2) - int(scaled_laser_width) / 2) # horizontally center the laser image within the bounding box
             y_start = int(y + (h/2)) - int(scaled_laser_height / 2) # vertically center the laser image within the bounding box
 
             y1, y2 = y_start, y_start + scaled_laser_height
-            x1, x2 = x, x + scaled_laser_img.shape[1]
+            x1, x2 = x_start, x_start + scaled_laser_width
 
             alpha_s = scaled_laser_img[:, :, 3] / 255.0
             alpha_l = 1.0 - alpha_s
