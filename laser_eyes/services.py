@@ -19,6 +19,9 @@ def detect_eyes(image, laser_scale):
     laser_img_w = laser_img.shape[1]
     laser_img_h = laser_img.shape[0]
 
+    image_width = image.shape[1]
+    image_height = image.shape[0]
+
     for (x,y,w,h) in faces:
         # cv2.rectangle(image,(x,y),(x+w,y+h),(102, 0, 255),5)
 
@@ -53,12 +56,28 @@ def detect_eyes(image, laser_scale):
             y1, y2 = y_start, y_start + scaled_laser_height
             x1, x2 = x_start, x_start + scaled_laser_width
 
-            alpha_s = scaled_laser_img[:, :, 3] / 255.0
+            # If the laser goes out of bounds on the image, determine the cutoff points
+            x1_trim = min(x1, 0)
+            x2_trim = max(x2-image_width, 0)
+            y1_trim = min(y1, 0)
+            y2_trim = max(y2-image_height, 0)
+
+            x1_img, x2_img = x1-x1_trim, x2-x2_trim
+            y1_img, y2_img = y1-y1_trim, y2-y2_trim
+
+            x1_laser, x2_laser = -1 * x1_trim, scaled_laser_width - x2_trim
+            y1_laser, y2_laser = -1 * y1_trim, scaled_laser_height - y2_trim
+
+            # print(f'IMG SIZE: {image_width} x {image_height} \nLASER SIZE: {scaled_laser_width} x {scaled_laser_height}\nx_start: {x1} x_finish: {x2} y_start: {y1} y_finish: {y2}\nx1_trim: {x1_trim} x2_trim: {x2_trim} y1_trim: {y1_trim} y2_trim: {y2_trim}\nx1_img: {x1_img} x2_img: {x2_img} y1_img: {y1_img} y2_img: {y2_img}\nx1_laser: {x1_laser} x2_laser: {x2_laser} y1_laser: {y1_laser} y2_laser: {y2_laser}')
+
+            alpha_s = scaled_laser_img[y1_laser:y2_laser, x1_laser:x2_laser, 3] / 255.0
             alpha_l = 1.0 - alpha_s
 
             for c in range(0, 3):
-                image[y1:y2, x1:x2, c] = (alpha_s * scaled_laser_img[:, :, c] +
-                                        alpha_l * image[y1:y2, x1:x2, c])
+                image[y1_img:y2_img, x1_img:x2_img, c] = (
+                        alpha_s * scaled_laser_img[y1_laser:y2_laser, x1_laser:x2_laser, c] +
+                        alpha_l * image[y1_img:y2_img, x1_img:x2_img, c]
+                    )
 
             # cv2.rectangle(image,(x,y),(x+w,y+h),(255, 102, 0),5)
             # cv2.circle(image, (x,y), radius=5, color=(34, 255, 0), thickness=3)
