@@ -45,7 +45,7 @@ def detect_eyes(image, laser_scale):
             x = x + face_x  # offset within face area
             y = y + face_y  # offset within face area
 
-            width = w * int(laser_scale)   # desired width of laser image
+            width = round(float(w) * float(laser_scale))   # desired width of laser image
             height = int(width * (laser_img_h / laser_img_w))
             scaled_laser_img = cv2.resize(laser_img, (width, height))
             scaled_laser_width = scaled_laser_img.shape[1]

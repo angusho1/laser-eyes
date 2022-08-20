@@ -95,5 +95,5 @@ function updateImage() {
 
 function getLaserScale() {
     const input = document.getElementById('laserScaleInput');
-    return input.value;
+    return input.value / 100;
 }
