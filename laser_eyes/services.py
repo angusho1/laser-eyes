@@ -6,24 +6,29 @@
 
 import cv2
 import numpy
+from typing import List, Any
 
-def detect_eyes(image, laser_scale):
-    print(f'laser scale: {laser_scale}')
+def detect_eyes(image) -> List[Any]:
+    """
+    Returns an array of objects representing detected faces.
+    Each object contains a 'face' attribute and an 'eyes' attribute. The 'face' attribute is a 1D array representing the coordinates of the face in the image. The 'eyes' attribute is a 2D array representing all detected eyes for the face.
+
+    Detected faces and eyes are in the shape of a 1D array [x,y,w,h], where:
+        (x,y) marks the upper left corner of the detected feature's bounding box in the image
+        w is the width of the bounding box
+        h is the height of the bounding box
+    """
     eye_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_righteye.xml'))
     frontal_face_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_frontalface_default.xml'))
     nose_cascade = cv2.CascadeClassifier(classifier_file('haarcascade_mcs_nose.xml'))
     
     faces = frontal_face_cascade.detectMultiScale(image, scaleFactor = 1.1, minNeighbors = 3)
 
-    laser_img = cv2.imread("laser_eyes/assets/lasers/laser.png", -1)
-    laser_img_w = laser_img.shape[1]
-    laser_img_h = laser_img.shape[0]
-
-    image_width = image.shape[1]
-    image_height = image.shape[0]
+    result = []
 
     for (x,y,w,h) in faces:
         # cv2.rectangle(image,(x,y),(x+w,y+h),(102, 0, 255),5)
+        face = [int(x),int(y),int(w),int(h)]
 
         cand_eyes = eye_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.25, minNeighbors = 5)
         cand_noses = nose_cascade.detectMultiScale(image[y:y+h, x:x+w], scaleFactor = 1.2, minNeighbors = 3)
@@ -38,10 +43,72 @@ def detect_eyes(image, laser_scale):
             y = y + face_y  # offset within face area
             # cv2.rectangle(image,(x,y),(x+w,y+h),(240, 154, 104),5)
 
+        eyes = []
+
         for (x,y,w,h) in cand_eyes:
             if nose is not None and y > nose[1]:
                 continue
 
+            eyes.append([int(x),int(y),int(w),int(h)])
+
+            # cv2.rectangle(image,(x,y),(x+w,y+h),(255, 102, 0),5)
+            # cv2.circle(image, (x,y), radius=5, color=(34, 255, 0), thickness=3)
+            # cv2.circle(image, (x+w,y+h), radius=5, color=(184, 0, 18), thickness=3)
+            # print(f'x: {x}, y: {y}, w: {w}, h: {h}')
+        
+        if len(eyes) > 0:
+            face = {
+                'face': face,
+                'eyes': eyes
+            }
+            result.append(face)
+    
+    return result
+
+def find_nose(candidates: numpy.ndarray, face_size: tuple) -> numpy.ndarray:
+    if len(candidates) == 0:
+        return None
+    elif len(candidates) == 1:
+        return candidates[0]
+    w, h = face_size
+    # Expect the nose to be roughly in the center of the face
+    face_center = (int(w/2), int(h/2))
+
+    def distance_from_center(box_coords: numpy.ndarray):
+        x1, y1, w, h = box_coords # box coords are relative to the face
+        x2 = x1+w
+        y2 = y1+h
+        box_center = (
+            int(x1+(x2-x1)/2), 
+            int(y1+(y2-y1)/2)
+        )
+        # Euclidean distance between box center and center of the face
+        return numpy.linalg.norm(numpy.subtract(box_center, face_center))
+
+    best_cand = min(candidates, key=distance_from_center)
+
+    return best_cand
+
+def apply_lasers(image, faces, laser_scale: float):
+    """
+    Overlay a laser at each detected eye on each face
+    
+    laser_scale determines the size of the laser relative to the eye
+    """
+
+    laser_img = cv2.imread("laser_eyes/assets/lasers/laser.png", -1)
+    laser_img_w = laser_img.shape[1]
+    laser_img_h = laser_img.shape[0]
+
+    image_width = image.shape[1]
+    image_height = image.shape[0]
+
+    for f in faces:
+        [x,y,w,h] = f['face']
+        face_x = x
+        face_y = y
+        
+        for [x,y,w,h] in f['eyes']:
             x = x + face_x  # offset within face area
             y = y + face_y  # offset within face area
 
@@ -79,36 +146,7 @@ def detect_eyes(image, laser_scale):
                         alpha_l * image[y1_img:y2_img, x1_img:x2_img, c]
                     )
 
-            # cv2.rectangle(image,(x,y),(x+w,y+h),(255, 102, 0),5)
-            # cv2.circle(image, (x,y), radius=5, color=(34, 255, 0), thickness=3)
-            # cv2.circle(image, (x+w,y+h), radius=5, color=(184, 0, 18), thickness=3)
-            # print(f'x: {x}, y: {y}, w: {w}, h: {h}')
-    
     return image
-
-def find_nose(candidates: numpy.ndarray, face_size: tuple) -> numpy.ndarray:
-    if len(candidates) == 0:
-        return None
-    elif len(candidates) == 1:
-        return candidates[0]
-    w, h = face_size
-    # Expect the nose to be roughly in the center of the face
-    face_center = (int(w/2), int(h/2))
-
-    def distance_from_center(box_coords: numpy.ndarray):
-        x1, y1, w, h = box_coords # box coords are relative to the face
-        x2 = x1+w
-        y2 = y1+h
-        box_center = (
-            int(x1+(x2-x1)/2), 
-            int(y1+(y2-y1)/2)
-        )
-        # Euclidean distance between box center and center of the face
-        return numpy.linalg.norm(numpy.subtract(box_center, face_center))
-
-    best_cand = min(candidates, key=distance_from_center)
-
-    return best_cand
 
 def classifier_file(filename: str) -> str:
     classifier_dir = 'laser_eyes/assets/classifiers'
